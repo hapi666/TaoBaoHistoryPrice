@@ -1,23 +1,21 @@
 package main
 
 import (
-	"database/sql"
-	"encoding/json"
+	"compress/gzip"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/axgle/mahonia"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/tidwall/gjson"
 )
 
-//通过淘口令得到对应商品的URL以及商品的对应id
+//通过淘口令得到对应商品的URL
 func GetURL(w http.ResponseWriter, r *http.Request) {
-	//http.FileServer()
 	r.ParseForm()
 	search := "tkl=" + "【CSDN CSDN下载  CSDN代下载  代下CSDN 代下CSDN  极速发货】，复制这条信息￥JXGJ0Itkh2F￥后打开手淘" //r.PostForm["zhikouling"] //得到前端的淘口令
 	date := strings.NewReader(search)
@@ -58,43 +56,46 @@ func GetURL(w http.ResponseWriter, r *http.Request) {
 	re := string(respBytes)
 	fmt.Println(re)
 	res := gjson.Get(re, "data.url")
-	fmt.Println(res)
-	//str := string(respBytes)
-	//fmt.Println(str)
-	u, err := url.Parse(res.Str)
+	//fmt.Println(res)
+
+	//Date := strings.NewReader(res.Str)
+	str := url.QueryEscape(res.Str)
+	urlll := "http://tool.manmanbuy.com/m/history.aspx?DA=1&action=gethistory&url=" + str + "&token=jb8n37e966ca1a60164089724f0b00ffd84865vxq8z6"
+	//fmt.Println(urlll)
+
+	req, err := http.NewRequest("GET", urlll, nil)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	m, err := url.ParseQuery(u.RawQuery)
+	req.Header.Set("Accept-Encoding", "gzip, deflate")
+	req.Header.Set("Accept", "application/json, text/javascript, */*")
+
+	Client := http.Client{}
+	response, err := Client.Do(req)
 	if err != nil {
+		fmt.Println(err.Error())
 		log.Fatal(err.Error())
 	}
-	id := m["id"][0]
-	//fmt.Println(id)
-	db, err := sql.Open("mysql", "root:123456@tcp(127.0.0.1:3306)/test?charset=utf8")
+	defer response.Body.Close()
+	//respBytes1, err := ioutil.ReadAll(response.Body)
+
 	if err != nil {
+		fmt.Println(err.Error())
 		log.Fatal(err.Error())
 	}
-	find, err := db.Query("SELECT price FROM commodity WHERE sid=?", template.HTMLEscapeString(id))
+	p := make([]byte, 1000)
+	read, err := gzip.NewReader(response.Body)
+	n, err := read.Read(p)
 	if err != nil {
-		log.Fatal(err.Error())
+		fmt.Println(err.Error())
 	}
-	var result []string
-	for find.Next() {
-		find.Scan(&result)
-	}
-	if result != nil {
-		// 将结果集result转换为json数据
-		res, err := json.Marshal(result)
-		if err != nil {
-			log.Fatal(err.Error())
-		}
-		fmt.Println(string(res))
-		// 给前端发送数据
-		w.Write(res)
-	} else {
-		w.Write([]byte("fail!"))
-	}
+	fmt.Println(n)
+	defer read.Close()
+	re1 := string(p)
+
+	enc := mahonia.NewDecoder("gb18030")
+	fmt.Println(enc.ConvertString(re1))
+	//w.Write(p)
 
 }
 
