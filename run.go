@@ -1,7 +1,6 @@
 package main
 
 import (
-	"compress/gzip"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,7 +8,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/axgle/mahonia"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/tidwall/gjson"
 )
@@ -17,9 +15,10 @@ import (
 //通过淘口令得到对应商品的URL
 func GetURL(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	search := "tkl=" + "【CSDN CSDN下载  CSDN代下载  代下CSDN 代下CSDN  极速发货】，复制这条信息￥JXGJ0Itkh2F￥后打开手淘" //r.PostForm["zhikouling"] //得到前端的淘口令
+	search := "tkl=" + "【@港仔文艺男 夏季韩版潮流宽松休闲裤男士街头纯色直筒裤九分裤】，复制这条信息€7JHd0ENgkIa€后打开👉淘宝👈" //r.PostForm["zhikouling"] //得到前端的淘口令
 	date := strings.NewReader(search)
-
+	//sssss := r.FormValue("name")
+	//date := strings.NewReader(sssss)
 	urll := "http://api.chaozhi.hk/tb/tklParse"
 	request, err := http.NewRequest("POST", urll, date)
 	if err != nil {
@@ -77,24 +76,14 @@ func GetURL(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err.Error())
 	}
 	defer response.Body.Close()
-	//respBytes1, err := ioutil.ReadAll(response.Body)
+	respBytes1, err := ioutil.ReadAll(response.Body)
 
 	if err != nil {
 		fmt.Println(err.Error())
 		log.Fatal(err.Error())
 	}
-	p := make([]byte, 1000)
-	read, err := gzip.NewReader(response.Body)
-	n, err := read.Read(p)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	fmt.Println(n)
-	defer read.Close()
-	re1 := string(p)
-
-	enc := mahonia.NewDecoder("gb18030")
-	fmt.Println(enc.ConvertString(re1))
+	result := gjson.Get(string(respBytes1), "jsData")
+	fmt.Println(result)
 	//w.Write(p)
 
 }
