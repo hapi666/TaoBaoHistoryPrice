@@ -15,10 +15,11 @@ import (
 //通过淘口令得到对应商品的URL
 func GetURL(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	search := "tkl=" + "【@港仔文艺男 夏季韩版潮流宽松休闲裤男士街头纯色直筒裤九分裤】，复制这条信息€7JHd0ENgkIa€后打开👉淘宝👈" //r.PostForm["zhikouling"] //得到前端的淘口令
-	date := strings.NewReader(search)
-	//sssss := r.FormValue("name")
-	//date := strings.NewReader(sssss)
+	//search := "tkl=" + "【@港仔文艺男 夏季韩版潮流宽松休闲裤男士街头纯色直筒裤九分裤】，复制这条信息€7JHd0ENgkIa€后打开👉淘宝👈" //r.PostForm["zhikouling"] //得到前端的淘口令
+	//date := strings.NewReader(search)
+	sssss1 := r.FormValue("name")
+	sssss:="tkl="+sssss1
+	date := strings.NewReader(sssss)
 	urll := "http://api.chaozhi.hk/tb/tklParse"
 	request, err := http.NewRequest("POST", urll, date)
 	if err != nil {
@@ -83,9 +84,16 @@ func GetURL(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err.Error())
 	}
 	result := gjson.Get(string(respBytes1), "jsData")
-	fmt.Println(result)
-	//w.Write(p)
-
+	fmt.Println(result.Str)
+	//temp:=make([]string,1000)
+	////temp=append(temp,result.Str)
+	//temp=strings.Split(result.Str,",")
+	//for _,v:=range temp {
+	//	fmt.Println(v)
+	//}
+	bb:=[]byte(result.Str)
+	//fmt.Println(result.Type)
+	w.Write(bb)
 }
 
 func main() {
