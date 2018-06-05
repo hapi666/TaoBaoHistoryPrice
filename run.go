@@ -7,19 +7,20 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/tidwall/gjson"
+	"regexp"
+	"github.com/gin-gonic/gin/json"
 )
 
 //通过淘口令得到对应商品的URL
 func GetURL(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
-	//search := "tkl=" + "【@港仔文艺男 夏季韩版潮流宽松休闲裤男士街头纯色直筒裤九分裤】，复制这条信息€7JHd0ENgkIa€后打开👉淘宝👈" //r.PostForm["zhikouling"] //得到前端的淘口令
-	//date := strings.NewReader(search)
-	sssss1 := r.FormValue("name")
-	sssss:="tkl="+sssss1
-	date := strings.NewReader(sssss)
+	search := "tkl=" + "【@港仔文艺男 夏季韩版潮流宽松休闲裤男士街头纯色直筒裤九分裤】，复制这条信息€7JHd0ENgkIa€后打开👉淘宝👈" //r.PostForm["zhikouling"] //得到前端的淘口令
+	date := strings.NewReader(search)
+	//tkl := r.FormValue("name")
+	//tkl="tkl="+tkl
+	//date := strings.NewReader(tkl)
 	urll := "http://api.chaozhi.hk/tb/tklParse"
 	request, err := http.NewRequest("POST", urll, date)
 	if err != nil {
@@ -85,15 +86,28 @@ func GetURL(w http.ResponseWriter, r *http.Request) {
 	}
 	result := gjson.Get(string(respBytes1), "jsData")
 	fmt.Println(result.Str)
-	//temp:=make([]string,1000)
-	////temp=append(temp,result.Str)
-	//temp=strings.Split(result.Str,",")
-	//for _,v:=range temp {
-	//	fmt.Println(v)
-	//}
-	bb:=[]byte(result.Str)
-	//fmt.Println(result.Type)
-	w.Write(bb)
+	reg1:=regexp.MustCompile("\\d{4}\\,\\d+\\,\\d+")
+	reg2:=regexp.MustCompile("\\d+\\.\\d+|\\d+(?:\\])")
+	Timedate:=reg1.FindAllString(result.Str,-1)
+	fmt.Println(Timedate)
+	Pri:=reg2.FindAllString(result.Str,-1)
+	//fmt.Println(Pri[1])
+	price:=make([]string,100)
+	for i,v:=range Pri{
+		price[i]=strings.Trim(v,"]")
+	}
+	fmt.Println(price)
+	fmt.Println(price[3])
+	byteTime,err:=json.Marshal(Timedate)
+	if err!=nil {
+		log.Fatal(err.Error())
+	}
+	bytePrice,err:=json.Marshal(price)
+	if err!=nil {
+		log.Fatal(err.Error())
+	}
+	w.Write(byteTime)
+	w.Write(bytePrice)
 }
 
 func main() {
