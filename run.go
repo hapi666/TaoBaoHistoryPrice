@@ -6,11 +6,12 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
+
+	"github.com/gin-gonic/gin/json"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/tidwall/gjson"
-	"regexp"
-	"github.com/gin-gonic/gin/json"
 )
 
 //通过淘口令得到对应商品的URL
@@ -18,9 +19,9 @@ func GetURL(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	search := "tkl=" + "【@港仔文艺男 夏季韩版潮流宽松休闲裤男士街头纯色直筒裤九分裤】，复制这条信息€7JHd0ENgkIa€后打开👉淘宝👈" //r.PostForm["zhikouling"] //得到前端的淘口令
 	date := strings.NewReader(search)
-	//tkl := r.FormValue("name")
-	//tkl="tkl="+tkl
-	//date := strings.NewReader(tkl)
+	// tkl := r.FormValue("name")
+	// tkl = "tkl=" + tkl
+	// date := strings.NewReader(tkl)
 	urll := "http://api.chaozhi.hk/tb/tklParse"
 	request, err := http.NewRequest("POST", urll, date)
 	if err != nil {
@@ -60,6 +61,7 @@ func GetURL(w http.ResponseWriter, r *http.Request) {
 	//fmt.Println(res)
 
 	//Date := strings.NewReader(res.Str)
+
 	str := url.QueryEscape(res.Str)
 	urlll := "http://tool.manmanbuy.com/m/history.aspx?DA=1&action=gethistory&url=" + str + "&token=jb8n37e966ca1a60164089724f0b00ffd84865vxq8z6"
 	//fmt.Println(urlll)
@@ -86,24 +88,24 @@ func GetURL(w http.ResponseWriter, r *http.Request) {
 	}
 	result := gjson.Get(string(respBytes1), "jsData")
 	fmt.Println(result.Str)
-	reg1:=regexp.MustCompile("\\d{4}\\,\\d+\\,\\d+")
-	reg2:=regexp.MustCompile("\\d+\\.\\d+|\\d+(?:\\])")
-	Timedate:=reg1.FindAllString(result.Str,-1)
+	reg1 := regexp.MustCompile("\\d{4}\\,\\d+\\,\\d+")
+	reg2 := regexp.MustCompile("\\d+\\.\\d+|\\d+(?:\\])")
+	Timedate := reg1.FindAllString(result.Str, -1)
 	fmt.Println(Timedate)
-	Pri:=reg2.FindAllString(result.Str,-1)
+	Pri := reg2.FindAllString(result.Str, -1)
 	//fmt.Println(Pri[1])
-	price:=make([]string,100)
-	for i,v:=range Pri{
-		price[i]=strings.Trim(v,"]")
+	price := make([]string, 100)
+	for i, v := range Pri {
+		price[i] = strings.Trim(v, "]")
 	}
 	fmt.Println(price)
 	fmt.Println(price[3])
-	byteTime,err:=json.Marshal(Timedate)
-	if err!=nil {
+	byteTime, err := json.Marshal(Timedate)
+	if err != nil {
 		log.Fatal(err.Error())
 	}
-	bytePrice,err:=json.Marshal(price)
-	if err!=nil {
+	bytePrice, err := json.Marshal(price)
+	if err != nil {
 		log.Fatal(err.Error())
 	}
 	w.Write(byteTime)
@@ -112,7 +114,8 @@ func GetURL(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/", GetURL)
-	err := http.ListenAndServe(":8080", nil)
+
+	err := http.ListenAndServeTLS(":443", "shuangmiao.top.crt", "shuangmiao.top.key", nil)
 	if err != nil {
 		log.Fatal("ListenAndServer: ", err)
 	}
